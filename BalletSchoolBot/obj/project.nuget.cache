@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "clui9aWZI3z4/FACrzn2xbJ8MkQNkFBiqdaRu5Yv4E3SGSY9KeuYfjimFNFS9YRl08OSuaZM+XYcElIYYdwEtA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\admin\\source\\repos\\BalletSchoolBot\\BalletSchoolBot\\BalletSchoolBot.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\admin\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
