@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "clui9aWZI3z4/FACrzn2xbJ8MkQNkFBiqdaRu5Yv4E3SGSY9KeuYfjimFNFS9YRl08OSuaZM+XYcElIYYdwEtA==",
+  "dgSpecHash": "mIROwyJ8gw4PtF8OFg/AsocS4KPPxyaeuFDnNWYqjLCnLeV/A+zz4rY53VoJ0Rinw1R/s/GRwZYZcpk4swi2wA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\admin\\source\\repos\\BalletSchoolBot\\BalletSchoolBot\\BalletSchoolBot.csproj",
+  "projectFilePath": "C:\\Users\\admin\\Documents\\GitHub\\BalletSchoolNotificator\\BalletSchoolBot\\BalletSchoolBot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\admin\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
   ],

@@ -18,8 +18,8 @@ class Program
         {
             Console.WriteLine("Checking for messages and debts...");
             await GetNotification();
-            await SendDebtorMounth();
-            await SendCreditor();
+           // await SendDebtorMounth();
+           // await SendCreditor();
             await Task.Delay(1000); // Задержка в 1 секунду между запросами
         }
     }
@@ -70,37 +70,70 @@ class Program
 
     static async Task GetNotification()
     {
-        
-        string url = $"https://api.green-api.com/waInstance{idInstance}/receiveNotification/{apiTokenInstance}";
+        var currentTime = DateTime.Now.TimeOfDay;
+        var startTime = new TimeSpan(18, 20, 0); // 18:00
+        var endTime = new TimeSpan(9, 0, 0); // 09:00
 
-        try
+        // Проверяем, находится ли текущее время вне диапазона с 09:00 до 18:00
+        if (currentTime > endTime && currentTime < startTime)
         {
-            HttpResponseMessage response = await client.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            Console.WriteLine("Рабочее время.");
+            string urlTime = $"https://api.green-api.com/waInstance{idInstance}/receiveNotification/{apiTokenInstance}";
+
+            try
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                Root notifications = JsonConvert.DeserializeObject<Root>(responseBody);
-
-              
-                if (responseBody != null)
+                HttpResponseMessage response = await client.GetAsync(urlTime);
+                if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"ReceiptId: {notifications.ReceiptId}");
-                    Console.WriteLine($"Type: {notifications.Body.TypeWebhook}");
-                    if(notifications.Body.TypeWebhook == "incomingCall" && notifications.Body.Status == "offer")
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    Root notifications = JsonConvert.DeserializeObject<Root>(responseBody);
+
+
+                    if (responseBody != null && notifications?.ReceiptId != null)
                     {
-                        await SendCallNotification(notifications.Body.InstanceData.Wid, $"Вам звонил номер {notifications.Body.From.Substring(0, notifications.Body.From.Length-5)} в нерабочее время!");
-                        await SendCallNotification(notifications.Body.From, $"Вы позвонили в нерабочее время, мы уведомлены, что вы звонили и обязательно перезвоним вам!");
+                        await DeleteNotification(notifications.ReceiptId.ToString());
                     }
-                    await DeleteNotification(notifications.ReceiptId.ToString());
                 }
             }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine("\nException Caught!");
+                Console.WriteLine("Message :{0} ", e.Message);
+            }
+            return;
         }
-        catch (HttpRequestException e)
-        {
-            Console.WriteLine("\nException Caught!");
-            Console.WriteLine("Message :{0} ", e.Message);
-        }
+        Console.WriteLine("Не рабочее время.");
+        string url = $"https://api.green-api.com/waInstance{idInstance}/receiveNotification/{apiTokenInstance}";
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    Root notifications = JsonConvert.DeserializeObject<Root>(responseBody);
+
+
+                    if (responseBody != null && notifications?.ReceiptId != null)
+                    {
+                        Console.WriteLine($"ReceiptId: {notifications.ReceiptId}");
+                        Console.WriteLine($"Type: {notifications.Body.TypeWebhook}");
+                        if (notifications.Body.TypeWebhook == "incomingCall" && notifications.Body.Status == "offer")
+                        {
+                            await SendCallNotification(notifications.Body.InstanceData.Wid, $"Вам звонил номер {notifications.Body.From.Substring(0, notifications.Body.From.Length - 5)} в нерабочее время!");
+                            await SendCallNotification(notifications.Body.From, $"Вы позвонили в нерабочее время, мы уведомлены, что вы звонили и обязательно перезвоним вам!");
+                        }
+                        await DeleteNotification(notifications.ReceiptId.ToString());
+                    }
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine("\nException Caught!");
+                Console.WriteLine("Message :{0} ", e.Message);
+            }
     }
     static async Task DeleteNotification(string notificationId)
     {
