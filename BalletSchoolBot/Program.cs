@@ -1,20 +1,22 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using System.Text;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
 using Newtonsoft.Json;
-using System.Numerics;
-
 class Program
 {
-    static string idInstance = "1103902967";
-    static string apiTokenInstance = "752c49c880144f91a08de861efe943b0cfcd675889fc4cd48b";
-    static string webAppUrl = "ВАШ_URL_ВЕБ-ПРИЛОЖЕНИЯ";
+    static string idInstance = "1103912324";
+    static string apiTokenInstance = "6e579cfae2194032b03f9c9d20fd7e6263ec7402b1d64f3384";
     static readonly HttpClient client = new HttpClient();
-  
-    static async Task Main()
+    static List<string> nomberReCall = new List<string> { "79642181512" };
+
+	static async Task Main()
     {
-        while (true)
+        GetCreditorNomber();
+
+		while (true)
         {
             Console.WriteLine("Checking for messages and debts...");
             await GetNotification();
@@ -28,7 +30,7 @@ class Program
     {
         List<string> idChats = new List<string> { "120363239727653355@c.us" };
         try
-        {
+        { 
             foreach (var chatId in idChats)
             {
                 // отправка сообщения раз в 3 дня
@@ -49,17 +51,14 @@ class Program
     {
         try
         {
-            string responseJson = await client.GetStringAsync(webAppUrl);
-            var debtors = JsonConvert.DeserializeObject<List<Debtor>>(responseJson);
-
-            foreach (var debtor in debtors)
-            {
-                // Пример условия: отправка сообщения раз в 30 дней
-                if (DateTime.Now.Day % 30 == 0)
-                {
-                    await SendCallNotification(debtor.ChatId, debtor.Message);
-                }
-            }
+            //foreach (var debtor in debtors)
+            //{
+            //    // Пример условия: отправка сообщения раз в 30 дней
+            //    if (DateTime.Now.Day % 30 == 0)
+            //    {
+            //        await SendCallNotification(debtor.ChatId, debtor.Message);
+            //    }
+            //}
         }
         catch (Exception e)
         {
@@ -70,14 +69,21 @@ class Program
 
     static async Task GetNotification()
     {
-        var currentTime = DateTime.Now.TimeOfDay;
-        var startTime = new TimeSpan(18, 20, 0); // 18:00
+		DateTime currentTimeUtc = DateTime.UtcNow;
+
+		// Выбор часового пояса, например "Eastern Standard Time" для восточного побережья США
+		TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("North Asia East Standard Time");
+
+		// Конвертация UTC времени в выбранный часовой пояс
+		DateTime currentTimeZone = TimeZoneInfo.ConvertTimeFromUtc(currentTimeUtc, easternZone);
+		TimeSpan currentTime = currentTimeZone.TimeOfDay;
+		var startTime = new TimeSpan(10, 0, 0); // 18:00
         var endTime = new TimeSpan(9, 0, 0); // 09:00
 
-        // Проверяем, находится ли текущее время вне диапазона с 09:00 до 18:00
-        if (currentTime > endTime && currentTime < startTime)
+		// Проверяем, находится ли текущее время вне диапазона с 09:00 до 18:00
+		if (currentTime > endTime && currentTime < startTime)
         {
-            Console.WriteLine("Рабочее время.");
+            Console.WriteLine($"Рабочее время {currentTime.Hours} ");
             string urlTime = $"https://api.green-api.com/waInstance{idInstance}/receiveNotification/{apiTokenInstance}";
 
             try
@@ -122,7 +128,10 @@ class Program
                         Console.WriteLine($"Type: {notifications.Body.TypeWebhook}");
                         if (notifications.Body.TypeWebhook == "incomingCall" && notifications.Body.Status == "offer")
                         {
-                            await SendCallNotification(notifications.Body.InstanceData.Wid, $"Вам звонил номер {notifications.Body.From.Substring(0, notifications.Body.From.Length - 5)} в нерабочее время!");
+                        foreach (var nomber in nomberReCall)
+                        {
+                            await SendCallNotification($"{nomber}@c.us", $"Вам звонил номер {notifications.Body.From.Substring(0, notifications.Body.From.Length - 5)} в нерабочее время!");
+                        }
                             await SendCallNotification(notifications.Body.From, $"Вы позвонили в нерабочее время, мы уведомлены, что вы звонили и обязательно перезвоним вам!");
                         }
                         await DeleteNotification(notifications.ReceiptId.ToString());
@@ -135,6 +144,98 @@ class Program
                 Console.WriteLine("Message :{0} ", e.Message);
             }
     }
+    static void GetCreditorNomber()
+    {
+		string[] Scopes = { SheetsService.Scope.SpreadsheetsReadonly };
+		string ApplicationName = "Google Sheets API .NET Quickstart";
+		string spreadsheetId = "1dpg2LYy3QA8YllteHdnQOYOnhLilUV2K0Q-LP8XDPAk";
+		string range = "Лист2!A:Z"; // Укажите диапазон, который хотите прочитать
+
+		GoogleCredential credential;
+
+		using (var stream = new FileStream("D://notificationcreditor-4f4dd8981059.json", FileMode.Open, FileAccess.Read))
+		{
+			credential = GoogleCredential.FromStream(stream)
+				.CreateScoped(Scopes);
+		}
+
+		// Создание Google Sheets API сервиса.
+		var service = new SheetsService(new BaseClientService.Initializer()
+		{
+			HttpClientInitializer = credential,
+			ApplicationName = ApplicationName,
+		});
+
+		// Чтение данных
+		SpreadsheetsResource.ValuesResource.GetRequest request =
+				service.Spreadsheets.Values.Get(spreadsheetId, range);
+
+		ValueRange response = request.Execute();
+		IList<IList<Object>> values = response.Values;
+		DateTime now = DateTime.Now;
+        int nowMountRow = 0;
+
+		switch (now.Month)
+        {
+            case 9:
+                {
+					nowMountRow = 2; break;
+                }
+            case 10:
+                {
+					nowMountRow = 3; break;
+                }
+			case 11:
+				{
+					nowMountRow = 4; break;
+				}
+			case 12:
+				{
+					nowMountRow = 5; break;
+				}
+			case 1:
+				{
+					nowMountRow = 6; break;
+				}
+			case 2:
+				{
+					nowMountRow = 7; break;
+				}
+			case 3:
+				{
+					nowMountRow = 8; break;
+				}
+			case 4:
+				{
+					nowMountRow = 9; break;
+				}
+			case 5:
+				{
+					nowMountRow = 10; break;
+				}
+			case 6:
+				{
+					nowMountRow = 11; break;
+				}
+		}
+		string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(now.Month);
+
+		if (values != null && values.Count > 0)
+		{
+            foreach (var row in values)
+            {
+				if ((long.TryParse(row[nowMountRow-1].ToString(), out long resultBackMounth) && resultBackMounth != 0) && (long.TryParse(row[nowMountRow].ToString(), out long resultCurMounth) && resultCurMounth == 0) && (long.TryParse(row[nowMountRow+1].ToString(), out long resultNextMounth) && resultNextMounth == 0))
+				{
+                    if(row.Count>12) Console.WriteLine($"{row[0] + $" не внесли деньги за {monthName} - " + row[12].ToString()}");
+                }
+            }
+		}
+		else
+		{
+			Console.WriteLine("No data found.");
+		}
+	}
+
     static async Task DeleteNotification(string notificationId)
     {
         string url = $"https://api.green-api.com/waInstance{idInstance}/deleteNotification/{apiTokenInstance}/{notificationId}";
