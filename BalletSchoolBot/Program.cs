@@ -14,7 +14,7 @@ class Program
     static List<string> nomberReCall = new List<string> { "79041386602" };
     static bool auth = false;
     static Timer timer;
-	static TimeSpan startTime = new TimeSpan(18, 0, 0); // 18:00
+	static TimeSpan startTime = new TimeSpan(10, 0, 0); // 18:00
 	static TimeSpan endTime = new TimeSpan(9, 0, 0); // 09:00
 	static async Task Main()
     {
@@ -167,7 +167,9 @@ class Program
                             {
                                 await SendCallNotification($"{nomber}@c.us", $"Вам звонил номер {notifications.Body.From.Substring(0, notifications.Body.From.Length - 5)} в нерабочее время!");
                             }
-                            await SendCallNotification(notifications.Body.From, $"Вы позвонили в нерабочее время, мы уведомлены, что вы звонили и обязательно перезвоним вам!");
+							await Task.Delay(1000);
+
+							await SendCallNotification(notifications.Body.From, $"Вы позвонили в нерабочее время, мы уведомлены, что вы звонили и обязательно перезвоним вам!");
                         }
                         await DeleteNotification(notifications.ReceiptId.ToString());
                     }
